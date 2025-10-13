@@ -108,6 +108,10 @@
   </div>
 
 <script>
+/* -------------------------
+   YOUR ORIGINAL GAME SCRIPT
+   (exactly as you provided)
+   ------------------------- */
 const PASSWORD = "Ryan2703";
 let adminUnlocked = false;
 const STARTING_BUDGET=100,MAX_SLOTS=5;
@@ -141,7 +145,7 @@ function requireAdminAccess() {
   if (pass === PASSWORD) { adminUnlocked = true; alert("Access granted."); return true; }
   alert("Incorrect password."); return false;
 }
-document.addEventListener("DOMContentLoaded", ()=> {
+document.addEventListener("DOMContentLoaded", ()=>{
   const adminPanel = document.getElementById("adminPanel");
   adminPanel.addEventListener("click", (e)=>{
     if (!adminUnlocked && e.target.tagName !== "H3") {
@@ -249,52 +253,72 @@ document.getElementById("clearScoresBtn").onclick=clearScores;
 renderAll();
 </script>
 
-<!-- Firebase integration (added AFTER your code; does not change your functions) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+<!-- Firebase integration (compat) - ADDED AFTER your original script; original functions unchanged -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
-  // <-- replace values only if you have different config; this is your project config posted earlier
+  // Your project's Firebase config (use the one you already have)
   const firebaseConfig = {
     apiKey: "AIzaSyCeL14W6DUsxaiPghBcrDPr3mfum_uxLms",
     authDomain: "fantasyfriends-54c7e.firebaseapp.com",
     projectId: "fantasyfriends-54c7e",
     storageBucket: "fantasyfriends-54c7e.appspot.com",
     messagingSenderId: "949694094867",
-    appId: "1:949694094867:web:5eb7b360a0ce31b42c29e6"
+    appId: "1:949694094867:web:5eb7b360a0ce31b42c29e6",
+    measurementId: "G-EMPE8C3DLR"
   };
-  const app = firebase.initializeApp(firebaseConfig);
+
+  // initialize compat SDK
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // Real-time listener: updates local state whenever Firestore changes
-  // Keeps your existing state structure and rendering exactly as-is.
-  db.collection("games").doc("mainGame")
-    .onSnapshot(doc => {
-      if (doc.exists) {
-        try {
-          // replace local state with Firestore state and re-render
-          state = doc.data();
-          renderAll();
-        } catch (e) {
-          console.error("Error applying Firestore state:", e);
-        }
-      } else {
-        // no doc yet -> create it from current local state
-        db.collection("games").doc("mainGame").set(state).catch(err=>console.error(err));
-      }
-    }, err => console.error("Firestore listener error:", err));
+  // document we use to store full app state
+  const gamesDoc = db.collection("games").doc("mainGame");
 
-  // Keep your local save but also push to Firestore
+  // override saveState to also write to Firestore, but call original behavior first
   if (typeof saveState === "function") {
     const originalSaveState = saveState;
     saveState = function() {
-      // call your original save (localStorage etc.)
-      try { originalSaveState(); } catch(e){ console.error("originalSaveState error:", e); }
-      // then push to Firestore
-      db.collection("games").doc("mainGame").set(state).catch(err=>console.error("Firestore save error:", err));
+      try {
+        originalSaveState(); // keep localStorage behavior
+      } catch (e) {
+        console.error("originalSaveState error:", e);
+      }
+      // push to Firestore
+      try {
+        // make a shallow-safe copy to avoid Firestore issues with prototypes
+        const safeState = JSON.parse(JSON.stringify(state));
+        gamesDoc.set(safeState).catch(err => console.error("Firestore save error:", err));
+      } catch (err) {
+        console.error("Error serializing state for Firestore:", err);
+      }
     };
   } else {
-    console.warn("saveState() not found - Firestore will still listen but won't auto-save");
+    console.warn("saveState() not found. Firestore will listen but won't auto-save.");
   }
+
+  // real-time listener: updates local state when remote changes
+  gamesDoc.onSnapshot(doc => {
+    if (doc.exists) {
+      try {
+        const remote = doc.data();
+        // avoid unnecessary re-render if identical
+        const remoteJson = JSON.stringify(remote);
+        const localJson = JSON.stringify(state);
+        if (remoteJson !== localJson) {
+          state = remote;
+          renderAll();
+        }
+      } catch (e) {
+        console.error("Error applying Firestore state:", e);
+      }
+    } else {
+      // create initial doc from current local state
+      gamesDoc.set(JSON.parse(JSON.stringify(state))).catch(err => console.error("Firestore initial set error:", err));
+    }
+  }, error => {
+    console.error("Firestore listener error:", error);
+  });
 </script>
 
 </body>
