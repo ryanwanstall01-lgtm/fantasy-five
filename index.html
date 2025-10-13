@@ -68,11 +68,13 @@
   </header>
 
   <div class="wrap">
+    <!-- left -->
     <aside class="card">
       <h3 style="margin-top:0">Player Pool</h3>
       <div class="players-list" id="playerList"></div>
     </aside>
 
+    <!-- center -->
     <main>
       <section class="card teams-col">
         <h3 style="margin:0 0 6px 0">Teams</h3>
@@ -85,6 +87,7 @@
       </section>
     </main>
 
+    <!-- right (admin) -->
     <aside class="card admin-col" id="adminPanel">
       <h3 style="margin-top:0">Admin — Weekly Scores</h3>
       <div id="adminScores"></div>
@@ -95,6 +98,7 @@
     </aside>
   </div>
 
+  <!-- modal -->
   <div id="modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(2,6,23,.5);align-items:center;justify-content:center">
     <div class="card" style="width:520px;max-width:95%">
       <h3 style="margin:0 0 8px 0">Pick Player</h3>
@@ -103,27 +107,11 @@
     </div>
   </div>
 
-  <!-- Firebase setup -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeL14W6DUsxaiPghBcrDPr3mfum_uxLms",
-      authDomain: "fantasyfriends-54c7e.firebaseapp.com",
-      projectId: "fantasyfriends-54c7e",
-      storageBucket: "fantasyfriends-54c7e.appspot.com",
-      messagingSenderId: "949694094867",
-      appId: "1:949694094867:web:5eb7b360a0ce31b42c29e6"
-    };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-  </script>
-
 <script>
 const PASSWORD = "Ryan2703";
 let adminUnlocked = false;
 const STARTING_BUDGET=100,MAX_SLOTS=5;
-const MANAGERS=["Ryans Team","Noahs Team","Jaksens Team","Ksawerys Team","Coopers Team","Deans Team","Liams Team","Makinleys Team","Vivaans Team","Jordans Team","Blairs Team","Muhammads Team","Namans Team","Kyles Team"];
+const MANAGERS=["Ryans Team","Noahs Team","Jaksens Team","Ksawerys Team","Coopers Team","Deans Team","Liams Team","Makinleys Team","Vivaans Team","Jordans Team","Blairs Team","Muhammads Team","Namans Team","Kyles Team",]; // 👈 edit or add more names here
 
 const DEFAULT_PLAYERS=[
 {id:'p1', name:'Ryan', price:30, total:0, last:0}, 
@@ -134,8 +122,8 @@ const DEFAULT_PLAYERS=[
 {id:'p6', name:'Jaksen', price:20, total:0, last:0}, 
 {id:'p7', name:'Dean', price:15, total:0, last:0}, 
 {id:'p8', name:'Liam', price:30, total:0, last:0}, 
-{id:'p9', name:'Daniel', price:10, total:0, last:0},
-{id:'p10',name:'Makinley', price:15, total:0, last:0},
+{id:'p9', name:'Daniel', price:10, total:0, last:0}, 
+{id:'p10',name:'Makinley', price:15, total:0, last:0}, 
 {id:'p11',name:'Vivaan', price:20, total:0, last:0}, 
 {id:'p12',name:'Jordan', price:5, total:0, last:0}, 
 {id:'p13',name:'Blair', price:5, total:0, last:0}, 
@@ -153,7 +141,7 @@ function requireAdminAccess() {
   if (pass === PASSWORD) { adminUnlocked = true; alert("Access granted."); return true; }
   alert("Incorrect password."); return false;
 }
-document.addEventListener("DOMContentLoaded", ()=> {
+document.addEventListener("DOMContentLoaded", ()=>{
   const adminPanel = document.getElementById("adminPanel");
   adminPanel.addEventListener("click", (e)=>{
     if (!adminUnlocked && e.target.tagName !== "H3") {
@@ -161,17 +149,6 @@ document.addEventListener("DOMContentLoaded", ()=> {
       requireAdminAccess();
     }
   }, true);
-
-  // start Firestore real-time sync
-  db.collection("games").doc("mainGame")
-    .onSnapshot(doc => {
-      if(doc.exists){
-        state = doc.data();
-        renderAll();
-      } else {
-        db.collection("games").doc("mainGame").set(state);
-      }
-    }, err => console.error("Firestore listener error:", err));
 });
 
 let state = JSON.parse(localStorage.getItem("fantasyState")) || createInitialState();
@@ -181,11 +158,8 @@ function createInitialState(){
     teams:MANAGERS.map(name=>({managerName:name,budgetLeft:STARTING_BUDGET,slots:Array(MAX_SLOTS).fill(null),seasonPoints:0}))
   };
 }
-function saveState(){
-  localStorage.setItem("fantasyState",JSON.stringify(state));
-  db.collection("games").doc("mainGame").set(state).catch(err=>console.error("Firestore save error:",err));
-}
-function resetState(){if(confirm("Reset everything?")){localStorage.removeItem("fantasyState");db.collection("games").doc("mainGame").set(createInitialState());location.reload();}}
+function saveState(){localStorage.setItem("fantasyState",JSON.stringify(state));}
+function resetState(){if(confirm("Reset everything?")){localStorage.removeItem("fantasyState");location.reload();}}
 
 document.getElementById("resetBtn").onclick=resetState;
 function playerById(id){return state.players.find(p=>p.id===id);}
