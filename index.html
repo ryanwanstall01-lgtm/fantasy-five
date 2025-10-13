@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fantasy Friends</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f8fafc; --card:#ffffff; --muted:#64748b;
+    --accent:#6d28d9; --accent-2:#06b6d4; --success:#10b981;
+    --slot-border:#e6e9f2;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:18px;background:var(--bg);color:#0f172a;}
+  .wrap{display:grid;grid-template-columns:360px 1fr 360px;gap:18px;align-items:start}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{font-size:20px;margin:0}
+  .subtitle{color:var(--muted);font-size:13px}
+  .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 6px 18px rgba(15,23,42,.06);border:1px solid rgba(99,102,241,.04)}
+  .players-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .player-card{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;border:1px solid var(--slot-border)}
+  .player-top{display:flex;align-items:center;gap:10px}
+  .avatar{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+  .pname{font-weight:600}
+  .price{font-size:13px;color:var(--muted)}
+  .btn{background:var(--accent);color:white;padding:8px 10px;border:0;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(109,40,217,.12)}
+  .btn.secondary{background:var(--accent-2);color:white}
+  .teams-col{display:grid;grid-template-rows:repeat(4,auto);gap:12px}
+  .team-card{padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,.04);background:linear-gradient(180deg,rgba(255,255,255,.6),#fff);position:relative;}
+  .team-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .slots{display:flex;gap:8px;flex-wrap:wrap}
+  .slot{position:relative;width:72px;height:72px;border-radius:8px;border:2px dashed var(--slot-border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);cursor:pointer;background:#fbfdff}
+  .slot.filled{border-style:solid;background:linear-gradient(180deg,#f0fdfe,#ecfeff);color:#052e2f;font-weight:600;position:relative;}
+  .slot .points-circle{
+    position:absolute;top:4px;right:4px;
+    background:var(--accent-2);
+    color:white;font-size:10px;font-weight:700;
+    width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+  }
+  .slot .small{display:block;font-size:11px;color:var(--muted)}
+  .team-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+  .budget{font-weight:700;color:#0f172a}
+  .leaderboard{margin-top:12px}
+  .leaderboard table{width:100%;border-collapse:collapse}
+  .leaderboard th,.leaderboard td{padding:8px;text-align:left;border-bottom:1px solid #f1f5f9}
+  .admin-col{display:flex;flex-direction:column;gap:12px}
+  .score-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #f1f5f9}
+  input[type="number"]{width:84px;padding:6px;border-radius:8px;border:1px solid #e6eef8}
+  input[type="text"]{padding:8px;border-radius:8px;border:1px solid #e6eef8;width:100%}
+  .top-controls{display:flex;gap:8px;align-items:center}
+  footer{margin-top:16px;color:var(--muted);font-size:13px}
+  @media (max-width:1000px){.wrap{grid-template-columns:1fr;gap:12px}}
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Fantasy Friends</h1>
+      <div class="subtitle">4 teams • pick 5 players • 100-point budget • 10-player pool</div>
+    </div>
+    <div class="top-controls">
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <button class="btn" id="sampleBtn">Load sample</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- left -->
+    <aside class="card">
+      <h3 style="margin-top:0">Player Pool</h3>
+      <div style="margin-bottom:10px;color:var(--muted);font-size:13px">Click a player to assign.</div>
+      <div class="players-list" id="playerList"></div>
+    </aside>
+
+    <!-- center -->
+    <main>
+      <section class="card teams-col">
+        <h3 style="margin:0 0 6px 0">Teams</h3>
+        <div id="teamsContainer"></div>
+      </section>
+
+      <section class="card leaderboard" style="margin-top:12px">
+        <h3 style="margin-top:0">Leaderboard</h3>
+        <div id="leaderboardArea"></div>
+      </section>
+    </main>
+
+    <!-- right (admin) -->
+    <aside class="card admin-col" id="adminPanel">
+      <h3 style="margin-top:0">Admin — Weekly Scores</h3>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:6px">Enter scores for each player.</div>
+      <div id="adminScores"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" id="endWeekBtn">End Week</button>
+        <button class="btn ghost" id="clearScoresBtn">Clear</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- modal -->
+  <div id="modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(2,6,23,.5);align-items:center;justify-content:center">
+    <div class="card" style="width:520px;max-width:95%">
+      <h3 style="margin:0 0 8px 0">Pick Player</h3>
+      <div id="modalList" style="max-height:360px;overflow:auto"></div>
+      <button class="btn ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+<script>
+const PASSWORD = "Ryan2703";
+let adminUnlocked = false;
+
+// Simple password gate for admin
+function requireAdminAccess() {
+  if (adminUnlocked) return true;
+  const pass = prompt("Enter admin password:");
+  if (pass === PASSWORD) { adminUnlocked = true; alert("Access granted."); return true; }
+  alert("Incorrect password."); return false;
+}
+
+// Intercept all clicks/changes in admin panel
+document.addEventListener("DOMContentLoaded", ()=>{
+  const adminPanel = document.getElementById("adminPanel");
+  adminPanel.addEventListener("click", (e)=>{
+    if (!adminUnlocked && e.target.tagName !== "H3") {
+      e.stopPropagation(); e.preventDefault();
+      requireAdminAccess();
+    }
+  }, true);
+});
+
+// --- simplified fantasy system below
+const STARTING_BUDGET=100,MAX_SLOTS=5,TEAM_COUNT=4;
+const DEFAULT_PLAYERS=[
+  {id:'p1', name:'Ryan', price:15, total:0, last:0},
+  {id:'p2', name:'Noah', price:14, total:0, last:0},
+  {id:'p3', name:'Jaksen', price:12, total:0, last:0},
+  {id:'p4', name:'Ksawery', price:10, total:0, last:0},
+  {id:'p5', name:'Cooper', price:9, total:0, last:0},
+  {id:'p6', name:'Jaksen', price:16, total:0, last:0},
+  {id:'p7', name:'Dean', price:8, total:0, last:0},
+  {id:'p8', name:'Liam', price:11, total:0, last:0},
+  {id:'p9', name:'Daniel', price:13, total:0, last:0},
+  {id:'p10',name:'Makinley', price:9, total:0, last:0},
+  {id:'p11',name:'Vivaan', price:9, total:0, last:0},
+  {id:'p12',name:'Jordan', price:9, total:0, last:0},
+  {id:'p13',name:'Blair', price:9, total:0, last:0},
+  {id:'p14',name:'Muhammad', price:9, total:0, last:0},
+  {id:'p15',name:'Naman', price:9, total:0, last:0},
+  {id:'p16',name:'Luca', price:9, total:0, last:0},
+  {id:'p17',name:'Robbie', price:9, total:0, last:0},
+  {id:'p18',name:'Kyle', price:9, total:0, last:0},
+];
+let state={players:JSON.parse(JSON.stringify(DEFAULT_PLAYERS)),teams:[],week:0};
+for(let i=0;i<TEAM_COUNT;i++)state.teams.push({managerName:`Manager ${i+1}`,budgetLeft:STARTING_BUDGET,slots:Array(MAX_SLOTS).fill(null),seasonPoints:0});
+function playerById(id){return state.players.find(p=>p.id===id);}
+function renderPlayerPool(){
+  const div=document.getElementById("playerList");div.innerHTML="";
+  state.players.forEach(p=>{
+    const c=document.createElement("div");c.className="player-card";
+    c.innerHTML=`<div class='player-top'><div class='avatar'>${p.name[0]}</div><div><div class='pname'>${p.name}</div><div class='price'>${p.price} pts</div></div><div style='font-size:12px;color:var(--muted)'>last:${p.last}</div></div><button class='btn ghost' onclick="openPick('${p.id}')">Pick</button>`;
+    div.appendChild(c);
+  });
+}
+function renderTeams(){
+  const div=document.getElementById("teamsContainer");div.innerHTML="";
+  state.teams.forEach((t,ti)=>{
+    const c=document.createElement("div");c.className="team-card";
+    c.innerHTML=`<div class='team-title'><input type='text' value='${t.managerName}' style='border:0;font-weight:700;width:160px;background:transparent'><div>Pts: ${t.seasonPoints}</div></div>`;
+    const slots=document.createElement("div");slots.className="slots";
+    t.slots.forEach((sid,si)=>{
+      const s=document.createElement("div");s.className="slot"+(sid?" filled":"");
+      if(sid){
+        const pl=playerById(sid);
+        s.innerHTML=`<div>${pl.name}<br><span class='small'>${pl.price}</span></div>`;
+        if(pl.last>0){const circle=document.createElement("div");circle.className="points-circle";circle.textContent=pl.last;s.appendChild(circle);}
+      }else{s.textContent=`Slot ${si+1}`;}
+      s.onclick=()=>openSlot(ti,si);
+      slots.appendChild(s);
+    });
+    c.appendChild(slots);
+    div.appendChild(c);
+  });
+}
+function openSlot(ti,si){const modal=document.getElementById("modal");modal.style.display="flex";modal.dataset.ti=ti;modal.dataset.si=si;renderModalList();}
+function openPick(pid){const modal=document.getElementById("modal");modal.style.display="flex";modal.dataset.pid=pid;renderModalList();}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function renderModalList(){
+  const list=document.getElementById("modalList");list.innerHTML="";
+  state.players.forEach(p=>{
+    const b=document.createElement("div");b.style.display="flex";b.style.justifyContent="space-between";b.style.padding="6px";
+    b.innerHTML=`<div>${p.name} (${p.price})</div>`;
+    const btn=document.createElement("button");btn.className="btn";btn.textContent="Select";
+    btn.onclick=()=>{
+      const ti=document.getElementById("modal").dataset.ti;
+      const si=document.getElementById("modal").dataset.si;
+      if(ti!==undefined)assignPlayer(+ti,+si,p.id);
+      closeModal();
+    };
+    b.appendChild(btn);list.appendChild(b);
+  });
+}
+function assignPlayer(ti,si,pid){
+  const team=state.teams[ti];const p=playerById(pid);
+  const old=team.slots[si];if(old)team.budgetLeft+=playerById(old).price;
+  if(team.budgetLeft<p.price)return alert("Not enough budget");
+  team.slots[si]=pid;team.budgetLeft-=p.price;renderAll();
+}
+function renderAdminScores(){
+  const d=document.getElementById("adminScores");d.innerHTML="";
+  state.players.forEach(p=>{
+    const r=document.createElement("div");r.className="score-row";
+    r.innerHTML=`<div>${p.name}</div><input type='number' value='${p.last}' data-id='${p.id}' style='width:60px'>`;
+    d.appendChild(r);
+  });
+  d.querySelectorAll("input").forEach(inp=>{
+    inp.onchange=()=>{const pl=playerById(inp.dataset.id);pl.last=parseFloat(inp.value)||0;renderAll();}
+  });
+}
+function endWeek(){
+  if(!requireAdminAccess())return;
+  state.players.forEach(p=>p.total+=p.last);
+  state.teams.forEach(t=>{t.seasonPoints+=t.slots.reduce((a,s)=>a+(s?playerById(s).last:0),0);});
+  renderAll();alert("Week ended.");
+}
+function clearScores(){if(requireAdminAccess()){state.players.forEach(p=>p.last=0);renderAll();}}
+function renderLeaderboard(){
+  const a=document.getElementById("leaderboardArea");
+  const sorted=state.teams.slice().sort((x,y)=>y.seasonPoints-x.seasonPoints);
+  a.innerHTML="<table><tr><th>#</th><th>Manager</th><th>Points</th></tr>"+sorted.map((t,i)=>`<tr><td>${i+1}</td><td>${t.managerName}</td><td>${t.seasonPoints}</td></tr>`).join("")+"</table>";
+}
+function renderAll(){renderPlayerPool();renderTeams();renderAdminScores();renderLeaderboard();}
+document.getElementById("endWeekBtn").onclick=endWeek;
+document.getElementById("clearScoresBtn").onclick=clearScores;
+renderAll();
+</script>
+</body>
+</html>
