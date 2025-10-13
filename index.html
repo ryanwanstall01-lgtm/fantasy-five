@@ -28,7 +28,7 @@
   .btn{background:var(--accent);color:white;padding:8px 10px;border:0;border-radius:8px;cursor:pointer;font-weight:600}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(109,40,217,.12)}
   .btn.secondary{background:var(--accent-2);color:white}
-  .teams-col{display:grid;grid-template-rows:repeat(4,auto);gap:12px}
+  .teams-col{display:grid;grid-template-rows:auto;gap:12px}
   .team-card{padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,.04);background:linear-gradient(180deg,rgba(255,255,255,.6),#fff);position:relative;}
   .team-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .slots{display:flex;gap:8px;flex-wrap:wrap}
@@ -60,11 +60,10 @@
   <header>
     <div>
       <h1>Fantasy Friends</h1>
-      <div class="subtitle">4 teams • pick 5 players • 100-point budget • 10-player pool</div>
+      <div class="subtitle">Pick 5 players • 100-point budget • Auto save</div>
     </div>
     <div class="top-controls">
       <button class="btn ghost" id="resetBtn">Reset</button>
-      <button class="btn" id="sampleBtn">Load sample</button>
     </div>
   </header>
 
@@ -72,7 +71,6 @@
     <!-- left -->
     <aside class="card">
       <h3 style="margin-top:0">Player Pool</h3>
-      <div style="margin-bottom:10px;color:var(--muted);font-size:13px">Click a player to assign.</div>
       <div class="players-list" id="playerList"></div>
     </aside>
 
@@ -92,7 +90,6 @@
     <!-- right (admin) -->
     <aside class="card admin-col" id="adminPanel">
       <h3 style="margin-top:0">Admin — Weekly Scores</h3>
-      <div style="color:var(--muted);font-size:13px;margin-bottom:6px">Enter scores for each player.</div>
       <div id="adminScores"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn" id="endWeekBtn">End Week</button>
@@ -113,16 +110,37 @@
 <script>
 const PASSWORD = "Ryan2703";
 let adminUnlocked = false;
+const STARTING_BUDGET=100,MAX_SLOTS=5;
+const MANAGERS=["Ryans Team","Noahs Team","Jaksens Team","Ksawerys Team","Coopers Team","Deans Team","Liams Team","Makinleys Team","Vivaans Team","Jordans Team","Blairs Team","Muhammads Team","Namans Team","Kyles Team",]; // 👈 edit or add more names here
 
-// Simple password gate for admin
+const DEFAULT_PLAYERS=[
+{id:'p1', name:'Ryan', price:30, total:0, last:0}, 
+{id:'p2', name:'Noah', price:30, total:0, last:0}, 
+{id:'p3', name:'Jaksen', price:20, total:0, last:0}, 
+{id:'p4', name:'Ksawery', price:30, total:0, last:0}, 
+{id:'p5', name:'Cooper', price:10, total:0, last:0}, 
+{id:'p6', name:'Jaksen', price:20, total:0, last:0}, 
+{id:'p7', name:'Dean', price:15, total:0, last:0}, 
+{id:'p8', name:'Liam', price:30, total:0, last:0}, 
+{id:'p9', name:'Daniel', price:10, total:0, last:0},
+{id:'p10',name:'Makinley', price:15, total:0, last:0},
+{id:'p11',name:'Vivaan', price:20, total:0, last:0}, 
+{id:'p12',name:'Jordan', price:5, total:0, last:0}, 
+{id:'p13',name:'Blair', price:5, total:0, last:0}, 
+{id:'p14',name:'Muhammad', price:25, total:0, last:0}, 
+{id:'p15',name:'Naman', price:20, total:0, last:0}, 
+{id:'p16',name:'Luca', price:5, total:0, last:0}, 
+{id:'p17',name:'Robbie', price:5, total:0, last:0}, 
+{id:'p18',name:'Kyle', price:10, total:0, last:0},
+];
+
+// password protection
 function requireAdminAccess() {
   if (adminUnlocked) return true;
   const pass = prompt("Enter admin password:");
   if (pass === PASSWORD) { adminUnlocked = true; alert("Access granted."); return true; }
   alert("Incorrect password."); return false;
 }
-
-// Intercept all clicks/changes in admin panel
 document.addEventListener("DOMContentLoaded", ()=>{
   const adminPanel = document.getElementById("adminPanel");
   adminPanel.addEventListener("click", (e)=>{
@@ -133,31 +151,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }, true);
 });
 
-// --- simplified fantasy system below
-const STARTING_BUDGET=100,MAX_SLOTS=5,TEAM_COUNT=4;
-const DEFAULT_PLAYERS=[
-  {id:'p1', name:'Ryan', price:15, total:0, last:0},
-  {id:'p2', name:'Noah', price:14, total:0, last:0},
-  {id:'p3', name:'Jaksen', price:12, total:0, last:0},
-  {id:'p4', name:'Ksawery', price:10, total:0, last:0},
-  {id:'p5', name:'Cooper', price:9, total:0, last:0},
-  {id:'p6', name:'Jaksen', price:16, total:0, last:0},
-  {id:'p7', name:'Dean', price:8, total:0, last:0},
-  {id:'p8', name:'Liam', price:11, total:0, last:0},
-  {id:'p9', name:'Daniel', price:13, total:0, last:0},
-  {id:'p10',name:'Makinley', price:9, total:0, last:0},
-  {id:'p11',name:'Vivaan', price:9, total:0, last:0},
-  {id:'p12',name:'Jordan', price:9, total:0, last:0},
-  {id:'p13',name:'Blair', price:9, total:0, last:0},
-  {id:'p14',name:'Muhammad', price:9, total:0, last:0},
-  {id:'p15',name:'Naman', price:9, total:0, last:0},
-  {id:'p16',name:'Luca', price:9, total:0, last:0},
-  {id:'p17',name:'Robbie', price:9, total:0, last:0},
-  {id:'p18',name:'Kyle', price:9, total:0, last:0},
-];
-let state={players:JSON.parse(JSON.stringify(DEFAULT_PLAYERS)),teams:[],week:0};
-for(let i=0;i<TEAM_COUNT;i++)state.teams.push({managerName:`Manager ${i+1}`,budgetLeft:STARTING_BUDGET,slots:Array(MAX_SLOTS).fill(null),seasonPoints:0});
+let state = JSON.parse(localStorage.getItem("fantasyState")) || createInitialState();
+function createInitialState(){
+  return {
+    players:JSON.parse(JSON.stringify(DEFAULT_PLAYERS)),
+    teams:MANAGERS.map(name=>({managerName:name,budgetLeft:STARTING_BUDGET,slots:Array(MAX_SLOTS).fill(null),seasonPoints:0}))
+  };
+}
+function saveState(){localStorage.setItem("fantasyState",JSON.stringify(state));}
+function resetState(){if(confirm("Reset everything?")){localStorage.removeItem("fantasyState");location.reload();}}
+
+document.getElementById("resetBtn").onclick=resetState;
 function playerById(id){return state.players.find(p=>p.id===id);}
+
 function renderPlayerPool(){
   const div=document.getElementById("playerList");div.innerHTML="";
   state.players.forEach(p=>{
@@ -166,11 +172,12 @@ function renderPlayerPool(){
     div.appendChild(c);
   });
 }
+
 function renderTeams(){
   const div=document.getElementById("teamsContainer");div.innerHTML="";
   state.teams.forEach((t,ti)=>{
     const c=document.createElement("div");c.className="team-card";
-    c.innerHTML=`<div class='team-title'><input type='text' value='${t.managerName}' style='border:0;font-weight:700;width:160px;background:transparent'><div>Pts: ${t.seasonPoints}</div></div>`;
+    c.innerHTML=`<div class='team-title'><div><strong>${t.managerName}</strong></div><div>Pts: ${t.seasonPoints}</div></div><div class='budget'>Budget: ${t.budgetLeft}</div>`;
     const slots=document.createElement("div");slots.className="slots";
     t.slots.forEach((sid,si)=>{
       const s=document.createElement("div");s.className="slot"+(sid?" filled":"");
@@ -186,30 +193,31 @@ function renderTeams(){
     div.appendChild(c);
   });
 }
+
 function openSlot(ti,si){const modal=document.getElementById("modal");modal.style.display="flex";modal.dataset.ti=ti;modal.dataset.si=si;renderModalList();}
-function openPick(pid){const modal=document.getElementById("modal");modal.style.display="flex";modal.dataset.pid=pid;renderModalList();}
 function closeModal(){document.getElementById("modal").style.display="none";}
+
 function renderModalList(){
   const list=document.getElementById("modalList");list.innerHTML="";
   state.players.forEach(p=>{
     const b=document.createElement("div");b.style.display="flex";b.style.justifyContent="space-between";b.style.padding="6px";
     b.innerHTML=`<div>${p.name} (${p.price})</div>`;
     const btn=document.createElement("button");btn.className="btn";btn.textContent="Select";
-    btn.onclick=()=>{
-      const ti=document.getElementById("modal").dataset.ti;
-      const si=document.getElementById("modal").dataset.si;
-      if(ti!==undefined)assignPlayer(+ti,+si,p.id);
-      closeModal();
-    };
+    btn.onclick=()=>{const ti=document.getElementById("modal").dataset.ti;const si=document.getElementById("modal").dataset.si;assignPlayer(+ti,+si,p.id);closeModal();};
     b.appendChild(btn);list.appendChild(b);
   });
 }
+
 function assignPlayer(ti,si,pid){
-  const team=state.teams[ti];const p=playerById(pid);
+  const team=state.teams[ti];
+  const p=playerById(pid);
+  if(team.slots.includes(pid)) return alert("You can’t pick the same player twice!");
   const old=team.slots[si];if(old)team.budgetLeft+=playerById(old).price;
   if(team.budgetLeft<p.price)return alert("Not enough budget");
-  team.slots[si]=pid;team.budgetLeft-=p.price;renderAll();
+  team.slots[si]=pid;team.budgetLeft-=p.price;
+  saveState();renderAll();
 }
+
 function renderAdminScores(){
   const d=document.getElementById("adminScores");d.innerHTML="";
   state.players.forEach(p=>{
@@ -217,23 +225,25 @@ function renderAdminScores(){
     r.innerHTML=`<div>${p.name}</div><input type='number' value='${p.last}' data-id='${p.id}' style='width:60px'>`;
     d.appendChild(r);
   });
-  d.querySelectorAll("input").forEach(inp=>{
-    inp.onchange=()=>{const pl=playerById(inp.dataset.id);pl.last=parseFloat(inp.value)||0;renderAll();}
-  });
+  d.querySelectorAll("input").forEach(inp=>inp.onchange=()=>{const pl=playerById(inp.dataset.id);pl.last=parseFloat(inp.value)||0;saveState();renderAll();});
 }
+
 function endWeek(){
   if(!requireAdminAccess())return;
   state.players.forEach(p=>p.total+=p.last);
   state.teams.forEach(t=>{t.seasonPoints+=t.slots.reduce((a,s)=>a+(s?playerById(s).last:0),0);});
-  renderAll();alert("Week ended.");
+  saveState();renderAll();alert("Week ended.");
 }
-function clearScores(){if(requireAdminAccess()){state.players.forEach(p=>p.last=0);renderAll();}}
+function clearScores(){if(requireAdminAccess()){state.players.forEach(p=>p.last=0);saveState();renderAll();}}
+
 function renderLeaderboard(){
   const a=document.getElementById("leaderboardArea");
   const sorted=state.teams.slice().sort((x,y)=>y.seasonPoints-x.seasonPoints);
   a.innerHTML="<table><tr><th>#</th><th>Manager</th><th>Points</th></tr>"+sorted.map((t,i)=>`<tr><td>${i+1}</td><td>${t.managerName}</td><td>${t.seasonPoints}</td></tr>`).join("")+"</table>";
 }
+
 function renderAll(){renderPlayerPool();renderTeams();renderAdminScores();renderLeaderboard();}
+
 document.getElementById("endWeekBtn").onclick=endWeek;
 document.getElementById("clearScoresBtn").onclick=clearScores;
 renderAll();
