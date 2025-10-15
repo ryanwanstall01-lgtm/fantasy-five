@@ -13,7 +13,8 @@
     --radius:12px;
   }
   *{box-sizing:border-box}
-  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:18px;background:var(--bg);color:#0f172a;}
+  html,body{height:100%}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:18px;background:var(--bg);color:#0f172a;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
   .wrap{display:grid;grid-template-columns:360px 1fr 360px;gap:18px;align-items:start}
   header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
   h1{font-size:20px;margin:0}
@@ -25,14 +26,14 @@
   .avatar{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
   .pname{font-weight:600}
   .price{font-size:13px;color:var(--muted)}
-  .btn{background:var(--accent);color:white;padding:8px 10px;border:0;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn{background:var(--accent);color:white;padding:8px 10px;border:0;border-radius:8px;cursor:pointer;font-weight:600;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(109,40,217,.12)}
   .btn.secondary{background:var(--accent-2);color:white}
   .teams-col{display:grid;grid-template-rows:auto;gap:12px}
   .team-card{padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,.04);background:linear-gradient(180deg,rgba(255,255,255,.6),#fff);position:relative;}
   .team-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .slots{display:flex;gap:8px;flex-wrap:wrap}
-  .slot{position:relative;width:72px;height:72px;border-radius:8px;border:2px dashed var(--slot-border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);cursor:pointer;background:#fbfdff}
+  .slot{position:relative;width:72px;height:72px;border-radius:8px;border:2px dashed var(--slot-border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);cursor:pointer;background:#fbfdff;min-width:72px;min-height:72px}
   .slot.filled{border-style:solid;background:linear-gradient(180deg,#f0fdfe,#ecfeff);color:#052e2f;font-weight:600;position:relative;}
   .slot .points-circle{
     position:absolute;top:4px;right:4px;
@@ -48,12 +49,55 @@
   .leaderboard table{width:100%;border-collapse:collapse}
   .leaderboard th,.leaderboard td{padding:8px;text-align:left;border-bottom:1px solid #f1f5f9}
   .admin-col{display:flex;flex-direction:column;gap:12px}
-  .score-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #f1f5f9'}
+  .score-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #f1f5f9}
   input[type="number"]{width:84px;padding:6px;border-radius:8px;border:1px solid #e6eef8}
   input[type="text"]{padding:8px;border-radius:8px;border:1px solid #e6eef8;width:100%}
   .top-controls{display:flex;gap:8px;align-items:center}
   footer{margin-top:16px;color:var(--muted);font-size:13px}
-  @media (max-width:1000px){.wrap{grid-template-columns:1fr;gap:12px}}
+
+  /* --- Mobile / small-screen improvements --- */
+  @media (max-width:1000px){
+    .wrap{grid-template-columns:1fr;gap:12px}
+    body{margin:12px}
+    .card{padding:12px}
+    .player-card{padding:10px}
+    .players-list{grid-template-columns:1fr;gap:8px}
+    .teams-col{order:2}
+    .admin-col{order:3}
+    .leaderboard{order:4}
+    .top-controls{gap:6px}
+    .btn{padding:10px 12px;min-height:44px}
+    .slot{width:64px;height:64px;min-width:64px;min-height:64px;font-size:12px}
+    .avatar{width:36px;height:36px;border-radius:8px}
+    /* Allow long lists to scroll inside cards rather than the whole page */
+    .players-list{max-height:36vh;overflow-y:auto;padding-right:4px}
+    #modal .card{max-height:80vh;overflow:auto}
+    .slots{gap:8px}
+  }
+
+  @media (max-width:600px){
+    body{margin:10px}
+    h1{font-size:18px}
+    .subtitle{font-size:12px}
+    .card{padding:10px;border-radius:10px}
+    .player-card{padding:8px}
+    .players-list{max-height:40vh}
+    .btn{padding:12px 14px;min-height:48px;border-radius:10px}
+    .slot{width:56px;height:56px;min-width:56px;min-height:56px}
+    .avatar{width:32px;height:32px}
+    .leaderboard table td,.leaderboard table th{padding:6px}
+    /* Make team slots horizontally scrollable on very small screens to avoid line-wrapping */
+    .slots{display:flex;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+    .slots::-webkit-scrollbar{height:8px}
+    .slots::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.08);border-radius:8px}
+    /* Reduce gap between top header and content */
+    header{margin-bottom:8px}
+    /* Make modal full width with comfortable padding */
+    #modal .card{width:95%;max-width:480px;padding:12px}
+  }
+
+  /* small visual divider used in modal */
+  .modal-divider{height:1px;background:#f1f5f9;margin:8px 0;border-radius:2px}
 </style>
 </head>
 <body>
@@ -110,23 +154,23 @@ const STARTING_BUDGET=100,MAX_SLOTS=5;
 const MANAGERS=["Ryans Team","Noahs Team","Jaksens Team","Ksawerys Team","Coopers Team","Deans Team","Liams Team","Makinleys Team","Vivaans Team","Jordans Team","Blairs Team","Muhammads Team","Namans Team","Kyles Team"];
 
 const DEFAULT_PLAYERS=[
-{id:'p1', name:'Ryan', price:30, total:0, last:0}, 
-{id:'p2', name:'Noah', price:30, total:0, last:0}, 
-{id:'p3', name:'Jaksen', price:20, total:0, last:0}, 
-{id:'p4', name:'Ksawery', price:30, total:0, last:0}, 
-{id:'p5', name:'Cooper', price:10, total:0, last:0}, 
-{id:'p6', name:'Jaksen', price:20, total:0, last:0}, 
-{id:'p7', name:'Dean', price:15, total:0, last:0}, 
-{id:'p8', name:'Liam', price:30, total:0, last:0}, 
-{id:'p9', name:'Daniel', price:10, total:0, last:0}, 
-{id:'p10',name:'Makinley', price:15, total:0, last:0}, 
-{id:'p11',name:'Vivaan', price:20, total:0, last:0}, 
-{id:'p12',name:'Jordan', price:5, total:0, last:0}, 
-{id:'p13',name:'Blair', price:5, total:0, last:0}, 
-{id:'p14',name:'Muhammad', price:25, total:0, last:0}, 
-{id:'p15',name:'Naman', price:20, total:0, last:0}, 
-{id:'p16',name:'Luca', price:5, total:0, last:0}, 
-{id:'p17',name:'Robbie', price:5, total:0, last:0}, 
+{id:'p1', name:'Ryan', price:30, total:0, last:0},
+{id:'p2', name:'Noah', price:30, total:0, last:0},
+{id:'p3', name:'Jaksen', price:20, total:0, last:0},
+{id:'p4', name:'Ksawery', price:30, total:0, last:0},
+{id:'p5', name:'Cooper', price:10, total:0, last:0},
+{id:'p6', name:'Jaksen', price:20, total:0, last:0},
+{id:'p7', name:'Dean', price:15, total:0, last:0},
+{id:'p8', name:'Liam', price:30, total:0, last:0},
+{id:'p9', name:'Daniel', price:10, total:0, last:0},
+{id:'p10',name:'Makinley', price:15, total:0, last:0},
+{id:'p11',name:'Vivaan', price:20, total:0, last:0},
+{id:'p12',name:'Jordan', price:5, total:0, last:0},
+{id:'p13',name:'Blair', price:5, total:0, last:0},
+{id:'p14',name:'Muhammad', price:25, total:0, last:0},
+{id:'p15',name:'Naman', price:20, total:0, last:0},
+{id:'p16',name:'Luca', price:5, total:0, last:0},
+{id:'p17',name:'Robbie', price:5, total:0, last:0},
 {id:'p18',name:'Kyle', price:10, total:0, last:0},
 ];
 
@@ -253,9 +297,7 @@ function renderModalList(){
     list.appendChild(remRow);
     // divider
     const hr = document.createElement("div");
-    hr.style.height = "1px";
-    hr.style.background = "#f1f5f9";
-    hr.style.margin = "8px 0";
+    hr.className = "modal-divider";
     list.appendChild(hr);
   }
 
